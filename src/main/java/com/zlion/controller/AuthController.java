@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Date;
 import java.util.HashMap;
@@ -93,7 +94,7 @@ public class AuthController {
      */
     @ResponseBody
     @RequestMapping(value = "/registe", method = RequestMethod.POST)
-    public Result registe(HttpServletRequest request, HttpSession session){
+    public Result registe(HttpServletRequest request, HttpSession session, HttpServletResponse response){
         Result jsonRender = new Result();
 
         String regUsername = request.getParameter("username");
@@ -109,6 +110,9 @@ public class AuthController {
             jsonRender.argError();
         }
 
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Methods","POST");
+        response.setHeader("Access-Control-Allow-Headers","x-requested-with,content-type");
         return jsonRender;
     }
 
@@ -145,7 +149,7 @@ public class AuthController {
      */
     @ResponseBody
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public Result authLogin(HttpServletRequest request, HttpSession session){
+    public Result authLogin(HttpServletRequest request, HttpSession session, HttpServletResponse response){
         Result jsonRender = new Result();
 
         String username = request.getParameter("username");
@@ -154,6 +158,10 @@ public class AuthController {
         if ( !authService.loginValidate(session, username, password) ){
             jsonRender.passError();
         }
+
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Methods","POST");
+        response.setHeader("Access-Control-Allow-Headers","x-requested-with,content-type");
 
         return jsonRender;
     }

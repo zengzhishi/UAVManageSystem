@@ -20,8 +20,9 @@ public interface BlockApplicationRepository extends MongoRepository<BlockApplica
      * @param time
      */
     @Query(value = "{'geohash':?0,'endDate':{'$lt':?1},'startDate':{'$gt':?1}}")
-    public BlockApplication qureyByGeohashAndTime(String geohash, Date time);
+    public BlockApplication findByGeohashAndTime(String geohash, Date time);
 
-    public List<BlockApplication> qureyByGeohashAndTimeBetween(String geohash, Date beginTime, Date endTime);
+    @Query(value = "{'geohash':?0,'endDate':{'$gt':?1}}")
+    public List<BlockApplication> getByGeohashAndTimeBetween(String geohash, Date beginTime, Date endTime);
 
 }

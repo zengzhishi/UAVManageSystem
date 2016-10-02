@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Created by zzs on 2016/9/3.
@@ -92,4 +94,37 @@ public class AdminService {
         return userRepository.findByUsername(username);
     }
 
+    public void addAdmin(String username, String password) throws Exception{
+        adminRepository.save(new Admin(username, password));
+    }
+
+    public Map<String, Object> deleteAdmin(String username, String confirmPwd){
+        Map<String, Object> result = new HashMap<String, Object>();
+        Admin admin = adminRepository.findByUsername(username);
+
+        if (admin == null){
+            result.put("msg", "No such Admin username!");
+            result.put("state", false);
+        }
+        else{
+            if (admin.getPassword().equals(confirmPwd)){
+                adminRepository.delete(admin.getId());
+                result.put("state", true);
+            }
+            else{
+                result.put("state", false);
+                result.put("msg", "Password error!");
+            }
+        }
+
+        return result;
+    }
+
+    public boolean checkDeleteAccess(){
+        Long adminNum = adminRepository.count();
+        if (adminNum == 1){
+            return true;
+        }
+        return false;
+    }
 }

@@ -16,4 +16,6 @@ public interface AdminRepository extends JpaRepository<Admin, Long> {
     Admin findByUsernameAndPwd(@Param("qUsername") String username,
                                @Param("qPassword") String password);
 
+    Admin findByUsername(String username);
+
 }

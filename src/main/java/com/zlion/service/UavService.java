@@ -27,8 +27,8 @@ public class UavService {
     private BlockApplicationRepository blockApplicationRepository;
 
     private int countvalue;
-    private final SimpleDateFormat sim = new SimpleDateFormat("yyyy-MM-dd hh") ;
-    private final int ForwardDateNum = 1;
+    private static final SimpleDateFormat sim = new SimpleDateFormat("yyyy-MM-dd hh") ;
+    private static final int ForwardDateNum = 1;
 
 
     @Autowired
@@ -123,7 +123,7 @@ public class UavService {
         }
 
         //判断是否有申请
-        List<BlockApplication> applyList = blockApplicationRepository.qureyByGeohashAndTimeBetween(geohash, beginDate, endDate);
+        List<BlockApplication> applyList = blockApplicationRepository.getByGeohashAndTimeBetween(geohash, beginDate, endDate);
         if (applyList == null){
             result.put("state", true);
             result.put("data", null);
@@ -143,7 +143,7 @@ public class UavService {
         String strBeginDate = sim.format(new Date());
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
-        cal.add(Calendar.DATE, 1);
+        cal.add(Calendar.DATE, ForwardDateNum);
         String strEndDate = sim.format(cal.getTime());
 
         return getBlockApplyState(geohash, strBeginDate, strEndDate);

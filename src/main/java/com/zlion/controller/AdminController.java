@@ -45,6 +45,34 @@ public class AdminController {
     管理员登陆login
     登陆验证
      */
+    /**
+     * @api {post} /admin/login Admin login system
+     * @apiName Admin login
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     * @apiParam {String} username Username of the admin.
+     * @apiParam {String} password  Password of the admin.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError UserOrPassError The Username or password error.
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 103 LoginError
+     *     {
+     *       "Msg": "User or Password Error",
+     *       "Code": 103
+     *     }
+     */
     @ResponseBody
     @RequestMapping(value = "/login", method = RequestMethod.POST)
     public Result login(HttpSession session,
@@ -67,6 +95,31 @@ public class AdminController {
     /*
     管理员登出logout
      */
+    /**
+     * @api {delete} /admin/logout Admin logout from system
+     * @apiName Admin user logout
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError NeedAuth No user login.
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 101 NeedAuth
+     *     {
+     *       "Msg": "User Not Login",
+     *       "Code": 101
+     *     }
+     */
     @ResponseBody
     @RequestMapping(value = "/logout", method = RequestMethod.DELETE)
     public Result logout(HttpSession session){
@@ -83,8 +136,31 @@ public class AdminController {
     /*
     查询所有的普通用户
      */
+    /**
+     * @api {get} /admin/show/users Admin show user list
+     * @apiName Admin show users
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     * @apiSource {[User]} Data of user list
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 200,
+     *       "Msg": "ok"
+     *       "Data": [{
+     *           "usernmae", "password", "phone", "address", "email", "groupName", "registeDate", "confirm"
+     *       },{...},...
+     *       ]
+     *     }
+     *     #其中registeDate是存储为时间戳格式，需要做格式化的输出
+     *
+     */
     @ResponseBody
-    @RequestMapping(value = "/show/userList", method = RequestMethod.GET)
+    @RequestMapping(value = "/show/users", method = RequestMethod.GET)
     public Result getUsers(){
 
         Result jsonRender = new Result();
@@ -97,6 +173,28 @@ public class AdminController {
 
     /*
     使用用户的id进行查询用户的数据
+     */
+    /**
+     * @api {get} /admin/show/{id} Admin login system(id 为用户的id)
+     * @apiName Admin login
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     * @apiSource {Data} Data of user
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *       "Data": {
+     *           "usernmae", "password", "phone", "address", "email", "groupName", "registeDate", "confirm"
+     *       }
+     *     }
+     *     #其中registeDate是存储为时间戳格式，需要做格式化的输出
      */
     @ResponseBody
     @RequestMapping(value = "/show/{id}", method = RequestMethod.GET)
@@ -113,18 +211,49 @@ public class AdminController {
     /*
     根据用户的名字查看用户信息
      */
+    /**
+     * @api {get} /admin/showUserByName/{username} Admin find user by username(username 是用户名)
+     * @apiName Admin find user by username
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     * @apiSource {Data} Data of user
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *       "Data": {
+     *           "usernmae", "password", "phone", "address", "email", "groupName", "registeDate", "confirm"
+     *       }
+     *     }
+     *     #其中registeDate是存储为时间戳格式，需要做格式化的输出
+     *
+     * @apiError UserNotFoundError The user named username is not found.
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 104 UserNotFoundError
+     *     {
+     *       "Msg": "Can not fount {username}",
+     *       "Code": 104
+     *     }
+     */
     @ResponseBody
-    @RequestMapping(value = "/showUserByName/{userName}", method = RequestMethod.GET)
-    public Result showDetailOfUserByUserName(@PathVariable("userName") String userName){
+    @RequestMapping(value = "/showUserByName/{username}", method = RequestMethod.GET)
+    public Result showDetailOfUserByUserName(@PathVariable("username") String username){
 
-        User user = adminService.getUserByUsername(userName);
+        User user = adminService.getUserByUsername(username);
 
         Result jsonRender = new Result();
         if(user != null){
             jsonRender.put("Data",user);
         }
         else{
-            jsonRender.put("Msg", "Can not fount "+userName);
+            jsonRender.put("Msg", "Can not fount "+username);
             jsonRender.put("Code", 104);
         }
 
@@ -134,22 +263,65 @@ public class AdminController {
     /*
     管理员直接添加新用户
      */
+    /**
+     * @api {post} /admin/add/auth Admin add new user
+     * @apiName Admin add auth
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     * @apiParam {String} username Username of the auth.
+     * @apiParam {String} password  Password of the auth.
+     * @apiParam {String} email  Email of the auth.(Not necessary)
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError UserOrPassError The Username or password error.
+     * @apiError InsertDataError Can'n save auth data.
+     * @apiError RepeatingError The User name repeated.
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 102 UserOrPassError
+     *     {
+     *       "Msg": "Illegal Arguments",
+     *       "Code": 102
+     *     }
+     *
+     *     HTTP/1.1 103 InsertDataError
+     *     {
+     *       "Msg": 看具体情况,
+     *       "Code": 103
+     *     }
+     *
+     *     HTTP/1.1 104 RepeatingError
+     *     {
+     *       "Msg": "Repeating User Name",
+     *       "Code": 104
+     *     }
+     *
+     */
     @ResponseBody
-    @RequestMapping(value = "/save/auth", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/add/auth", method = RequestMethod.POST)
     public Result saveAuth(HttpServletRequest request){
-
         Result jsonRender = new Result();
 
         User user = new User();
         user.setUsername(request.getParameter("username"));
         user.setPassword(request.getParameter("password"));
-        if (user.getUsername()==null && user.getPassword()==null){
+        if (user.getUsername()==null || user.getPassword()==null){
             jsonRender.put("Msg", "Illegal Arguments");
             jsonRender.put("Code", 102);
         }
         else{
             if (adminService.checkUserExist(user.getUsername())){
-                jsonRender.put("Code", 103);
+                jsonRender.put("Code", 104);
                 jsonRender.put("Msg", "Repeating User Name");
             }
             else{
@@ -168,10 +340,38 @@ public class AdminController {
     }
 
 
-    /**
+    /*
     删除用户数据
     主要是使用在有不正当申请的用户时
-     **/
+     */
+    /**
+     * @api {delete} /admin/delete/auth Admin delete user
+     * @apiName Admin delete auth
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     * @apiParam {Long} id Id of the auth.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError AuthNotExistError User is not exist.
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 101 AuthNotExistError
+     *     {
+     *       "Msg": "Auth Not Exist!",
+     *       "Code": 101
+     *     }
+     *
+     */
     @ResponseBody
     @RequestMapping(value = "/delete/auth", method = RequestMethod.DELETE)
     public Result deleteAuth(HttpServletRequest request){
@@ -182,11 +382,10 @@ public class AdminController {
         if (adminService.checkUserExistById(id))
         {
             adminService.deleteUser(id);
-            jsonRender.put("Msg","Delete success");
         }
         else
         {
-            jsonRender.put("Msg","Delete failed");
+            jsonRender.put("Msg","Auth Not Exist!");
             jsonRender.put("Code",101);
         }
         return jsonRender;
@@ -195,6 +394,35 @@ public class AdminController {
     /*
     更新用户密码
     需要通过参入参数来实现，和post方法通过form表单传递不一样
+     */
+    /**
+     * @api {put} /admin/updatePwd/auth Admin update password of user
+     * @apiName Admin updatePwd for auth
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     * @apiParam {Long} id Id of the auth.
+     * @apiParam {String} password New password for user.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError ArgumentsError Illegal Arguments.
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 102 ArgumentsError
+     *     {
+     *       "Msg": "Password Can't be empty",
+     *       "Code": 102
+     *     }
+     *
      */
     @ResponseBody
     @RequestMapping(value = "/updatePwd/auth", method = RequestMethod.PUT)
@@ -208,10 +436,15 @@ public class AdminController {
         }catch (Exception e){
             e.printStackTrace();
         }
-        String newPassword = request.getParameter("password");
-//        System.out.println(">>>>>"+id+"   password:"+newPassword);
 
-        adminService.updateUserPwd(id, newPassword);
+        String newPassword = request.getParameter("password");
+        if (newPassword == null || newPassword.equals("")){
+            jsonRender = jsonRender.argError();
+            jsonRender.put("Msg", "Password Can't be empty");
+        }
+        else{
+            adminService.updateUserPwd(id, newPassword);
+        }
         return jsonRender;
     }
 
@@ -229,6 +462,111 @@ public class AdminController {
         return jsonRender;
     }
 
+    /**
+     * @api {post} /admin/add/admin Admin add admin user
+     * @apiName Admin add admin
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     * @apiParam {String} username Username of the admin.
+     * @apiParam {String} password  Password of the admin.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError IllegalMethodError Add admin user Error.
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 104 IllegalMethodError
+     *     {
+     *       "Msg": "Illegal Action Parameters",
+     *       "Code": 104
+     *     }
+     *
+     */
+    @ResponseBody
+    @RequestMapping(value = "/add/admin", method = RequestMethod.POST)
+    public Result addAdmin(HttpServletRequest request){
+        Result jsonRender = new Result();
+
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        try{
+            adminService.addAdmin(username, password);
+        }catch(Exception e){
+            e.printStackTrace();
+            jsonRender = jsonRender.illegalMethod();
+        }
+
+        return jsonRender;
+    }
+
+    /**
+     * @api {delete} /admin/delete/admin Admin delete admin user
+     * @apiName Admin delete admin
+     * @apiGroup Admin
+     * @apiVersion 0.1.0
+     *
+     * @apiParam {String} username Username of the admin.
+     * @apiParam {String} password  Password of the admin.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError IllegalMethodError Add admin user Error.
+     * @apiError PassOrUserError Admin user
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 104 IllegalMethodError
+     *     {
+     *       "Msg": "Admin user can't be empty",
+     *       "Code": 104
+     *     }
+     *
+     *     HTTP/1.1 103 PassOrUserError
+     *     {
+     *       "Msg": 多种情况,
+     *       "Code": 103
+     *     }
+     *
+     */
+    @ResponseBody
+    @RequestMapping(value = "/delete/admin", method = RequestMethod.DELETE)
+    public Result deleteAdmin(HttpServletRequest request){
+        Result jsonRender = new Result();
+
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        if (adminService.checkDeleteAccess()){
+            jsonRender.illegalMethod();
+            jsonRender.put("Msg", "Admin user can't be empty");
+        }
+        else{
+            Map<String,Object> result = adminService.deleteAdmin(username, password);
+            if (!(boolean)result.get("state")){
+                jsonRender = jsonRender.passError();
+                jsonRender.put("Msg", result.get("msg"));
+            }
+        }
+
+        return jsonRender;
+    }
 
 
 }
