@@ -41,26 +41,40 @@ public class UavController {
         Result jsonRender = new Result();
         jsonRender = jsonRender.okForList();
 
-        //分页的基本参数，根据需要自己设置需要的参数把
-        int page = Integer.parseInt(request.getParameter("page"));
-        int rows = Integer.parseInt(request.getParameter("rows"));
+//        //分页的基本参数，根据需要自己设置需要的参数把
+//        int page = Integer.parseInt(request.getParameter("page"));
+//        int rows = Integer.parseInt(request.getParameter("rows"));
+        String strBeginTime = request.getParameter("beginTime");
+        String strEndTime = request.getParameter("endTime");
 
-        //这里用的是时间戳,需要做转化
-        long startTimeStamp = Long.parseLong(request.getParameter("timeStart"));
-        long endTimeStamp = Long.parseLong(request.getParameter("timeEnd"));
+        int page = 1, rows = 10;
+//        long startTimeStamp = new Date().getTime();
+//        long endTimeStamp = new Date().getTime();
+//        //这里用的是时间戳,需要做转化
+//        try{
+//            startTimeStamp = Long.parseLong(request.getParameter("timeStart"));
+//            endTimeStamp = Long.parseLong(request.getParameter("timeEnd"));
+//        }catch (NumberFormatException e){
+//            e.printStackTrace();
+//        }
+
+
         String uuid = request.getParameter("uuid");
 
-        Date startTime = new Date(startTimeStamp*1000L);
-        Date endTime = new Date(endTimeStamp*1000L);
 
-//        List<Location> locations = uavService.getLocations(uuid);
-        List<Location> locationlist = uavService.getLocationsByTime(uuid,startTime,endTime,page,rows);
+//        Date startTime = new Date(startTimeStamp*1000L);
+//        Date endTime = new Date(endTimeStamp*1000L);
+        List<Location> locations = uavService.getLocationsByTime(uuid, strBeginTime, strEndTime);
+//        List<Location> locationlist = uavService.getLocationsByTime(uuid,startTime,endTime,page,rows);
+//
+//        jsonRender.put("Date",locationlist);
+//        jsonRender.put("Lenth",uavService.getCountvalue());
+//        jsonRender.put("startDate", startTime.toString());
+//        jsonRender.put("endDate", endTime.toString());
 
-        jsonRender.put("Date",locationlist);
-        jsonRender.put("Lenth",uavService.getCountvalue());
+        jsonRender.put("data", locations);
         return jsonRender;
     }
-
 
     /*
     无人机通过该接口添加无人的位置记录

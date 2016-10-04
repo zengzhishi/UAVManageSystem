@@ -2,6 +2,7 @@ package com.zlion.repository;
 
 import com.zlion.model.Location;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.List;
 @Repository
 public interface LocationRepository extends MongoRepository<Location, String> {
 
+    @Query(value = "{'uavId':?0}")
     public List<Location> findByUavId(Long uavId);
 
     /**
@@ -22,8 +24,8 @@ public interface LocationRepository extends MongoRepository<Location, String> {
      * @param endTime 结束时间
      * @return
      */
+    @Query(value = "{'uavId':?0,'time':{'$gt':?1, '$lt':?2}}")
     public List<Location> findByUavIdAndTimeBetween(Long uavId, Date beginTime, Date endTime);
-
 
 
 

@@ -1,6 +1,8 @@
 package com.zlion.model;
 
 import javax.persistence.Id;
+import javax.persistence.Transient;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**

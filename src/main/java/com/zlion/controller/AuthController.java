@@ -67,8 +67,6 @@ public class AuthController {
      * @apiName Registe User
      * @apiGroup Auth
      *
-     * @apiParam {Number} id Users unique ID.
-     *
      * @apiParam {String} username Username of the User.
      * @apiParam {String} password  Password of the User.
      * @apiParam {String} email  Email of the User.
@@ -111,8 +109,9 @@ public class AuthController {
         }
 
         response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setHeader("Access-Control-Allow-Methods","POST");
-        response.setHeader("Access-Control-Allow-Headers","x-requested-with,content-type");
+//        response.setHeader("Access-Control-Allow-Methods","POST");
+//        response.setHeader("Access-Control-Allow-Headers","x-requested-with,content-type");
+
         return jsonRender;
     }
 
@@ -160,8 +159,8 @@ public class AuthController {
         }
 
         response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setHeader("Access-Control-Allow-Methods","POST");
-        response.setHeader("Access-Control-Allow-Headers","x-requested-with,content-type");
+//        response.setHeader("Access-Control-Allow-Methods","POST");
+//        response.setHeader("Access-Control-Allow-Headers","x-requested-with,content-type");
 
         return jsonRender;
     }
@@ -216,11 +215,12 @@ public class AuthController {
      * @api {post} /auth/update/detail User update personal information in system
      * @apiName User update，请前端在数据传输之前判断数据格式问题
      * @apiGroup Auth
+     * @apiVersion 0.1.1
      *
-     * @apiParam {groupName} User belonged group name
-     * @apiParam {address} User address
-     * @apiParam {email} User email
-     * @apiParam {email} User telephone number
+     * @apiParam {String} groupName User belonged group name
+     * @apiParam {String} address User address
+     * @apiParam {String} email User email
+     * @apiParam {String} phone User telephone number
      *
      * @apiSource {Number} Code Return code of state
      * @apiSource {String} Msg Msg of state
@@ -374,9 +374,7 @@ public class AuthController {
         Long userId = (Long) session.getAttribute("authId");
         List<Uav> uavs = authService.getUavs(userId);
         jsonRender = jsonRender.okForList();
-
-        if (uavs == null)
-            jsonRender.put("Msg", "No Uav");
+        jsonRender.put("data", uavs);
 
         return jsonRender;
     }

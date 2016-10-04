@@ -37,7 +37,7 @@ public class AdminController {
      */
     @RequestMapping(value = "/home")
     public String adminHome(Map<String,Object> map){
-        map.put("adminName","123");
+        map.put("adminName", "123");
         return "/admin/home";
     }
 

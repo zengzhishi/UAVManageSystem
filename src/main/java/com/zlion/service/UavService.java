@@ -27,7 +27,7 @@ public class UavService {
     private BlockApplicationRepository blockApplicationRepository;
 
     private int countvalue;
-    private static final SimpleDateFormat sim = new SimpleDateFormat("yyyy-MM-dd hh") ;
+    private final static SimpleDateFormat sim = new SimpleDateFormat("yyyy-MM-dd hh");
     private static final int ForwardDateNum = 1;
 
 
@@ -44,19 +44,35 @@ public class UavService {
         return locationRepository.findByUavId(uavId);
     }
 
+    public List<Location> getLocationsByTime(String uuid, String strBeginTime, String strEndTime){
+
+        Long uavId = uavRepository.findByUuid(uuid).getId();
+        Date beginDate, endDate;
+        try{
+            beginDate = sim.parse(strBeginTime);
+            endDate = sim.parse(strEndTime);
+        }catch (ParseException e){
+            e.printStackTrace();
+            return null;
+        }
+        List<Location> locationList = locationRepository.findByUavIdAndTimeBetween(uavId, beginDate, endDate);
+        return locationList;
+    }
+
     @Transactional
     public List<Location> getLocationsByTime(String uuid, Date starttime, Date endtime, int page, int rows){
         Long uavId = uavRepository.findByUuid(uuid).getId();
+//        List<Location> locationList = locationRepository.findByUavId(uavId);
         List<Location> locationList = locationRepository.findByUavIdAndTimeBetween(uavId,starttime,endtime);
-        countvalue=locationList.size();
-//      此处进行按时间排序
-        sortClass sort = new sortClass();//建立排序规则
-        Collections.sort(locationList,sort);//按照从小到大排序
-        Collections.reverse(locationList);//反转顺序
-
-        int fromindex = (page-1)*rows+1;
-        int toindex = fromindex+rows-1;
-        locationList.subList(fromindex,toindex);
+//        countvalue=locationList.size();
+////      此处进行按时间排序
+//        sortClass sort = new sortClass();//建立排序规则
+//        Collections.sort(locationList,sort);//按照从小到大排序
+//        Collections.reverse(locationList);//反转顺序
+//
+//        int fromindex = (page-1)*rows+1;
+//        int toindex = fromindex+rows-1;
+//        locationList.subList(fromindex,toindex);
         return  locationList;
     }
 
