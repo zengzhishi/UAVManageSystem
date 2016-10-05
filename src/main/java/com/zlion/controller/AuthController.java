@@ -66,6 +66,7 @@ public class AuthController {
      * @api {post} /auth/registe Add User information
      * @apiName Registe User
      * @apiGroup Auth
+     * @apiVersion 0.1.2
      *
      * @apiParam {String} username Username of the User.
      * @apiParam {String} password  Password of the User.
@@ -82,13 +83,22 @@ public class AuthController {
      *       "Msg": "ok"
      *     }
      *
-     * @apiError UserNotFound The arguments of the User error.
+     * @apiError RepeatedUser Repeating User Name.
+     * @apiError ArgumentError Username and password can't be empty.
      *
      * @apiErrorExample Error-Response:
-     *     HTTP/1.1 404 Not Found
+     *     HTTP/1.1 104 RepeatedUser
      *     {
-     *       "error": "Arguments Error"
+     *       "Code": 104,
+     *       "Msg": "Repeating User Name"
      *     }
+     *
+     *     HTTP/1.1 102 ArgumentError
+     *     {
+     *       "Code": 102,
+     *       "Msg": "Username and password can't be empty"
+     *     }
+     *
      */
     @ResponseBody
     @RequestMapping(value = "/registe", method = RequestMethod.POST)
@@ -100,13 +110,23 @@ public class AuthController {
         String regEmail = request.getParameter("email");
         String regPhone = request.getParameter("phone");
 
-        User user = new User(regUsername, regPassword, regPhone, null, regEmail, null, new Date());
-        try{
-            authService.registe(session,user);
-        }catch (Exception e){
-            e.printStackTrace();
+        if ((regUsername.equals("")||regUsername==null) || (regPassword.equals("")||regPassword==null)){
             jsonRender.argError();
+            jsonRender.put("Msg", "Username and password can't be empty");
         }
+        else{
+            User user = new User(regUsername, regPassword, regPhone, null, regEmail, null, new Date());
+            try{
+                boolean result = authService.registe(session,user);
+                if (!result){
+                    jsonRender.put("Code", 104);
+                    jsonRender.put("Msg", "Repeating User Name");
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
 
         response.setHeader("Access-Control-Allow-Origin", "*");
 //        response.setHeader("Access-Control-Allow-Methods","POST");

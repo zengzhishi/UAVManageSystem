@@ -31,10 +31,14 @@ public class AuthService {
 
 
     @Transactional
-    public void registe(HttpSession session, User user) throws Exception{
-        userRepository.save(user);
-        session.setAttribute("auth", user);
-        session.setAttribute("authId", user.getId());
+    public boolean registe(HttpSession session, User user) throws Exception{
+        if (userRepository.findByUsername(user.getUsername()) == null){
+            userRepository.save(user);
+            session.setAttribute("auth", user);
+            session.setAttribute("authId", user.getId());
+            return true;
+        }
+        return false;
     }
 
     @Transactional
