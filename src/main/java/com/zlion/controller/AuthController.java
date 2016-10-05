@@ -71,7 +71,7 @@ public class AuthController {
      * @apiParam {String} username Username of the User.
      * @apiParam {String} password  Password of the User.
      * @apiParam {String} email  Email of the User.
-     * @apiParam {String} Phone  Phone of the User.
+     * @apiParam {String} phone  Phone of the User.
      *
      * @apiSource {Number} Code Return code of state
      * @apiSource {String} Msg Msg of state
@@ -189,9 +189,10 @@ public class AuthController {
     登出
      */
     /**
-     * @api {get} /auth/logout User logout from system
+     * @api {delete} /auth/logout User logout from system
      * @apiName User logout
      * @apiGroup Auth
+     * @apiVersion 0.1.3
      *
      * @apiSource {Number} Code Return code of state
      * @apiSource {String} Msg Msg of state
@@ -213,7 +214,7 @@ public class AuthController {
      *     }
      */
     @ResponseBody
-    @RequestMapping(value = "/logout", method = RequestMethod.GET)
+    @RequestMapping(value = "/logout", method = RequestMethod.DELETE)
     public Result authLogout(HttpServletRequest request, HttpSession session){
         Result jsonRender = new Result();
 

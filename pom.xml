@@ -5,8 +5,8 @@
 
 	<groupId>com.zlion</groupId>
 	<artifactId>uavmanagesystem</artifactId>
-	<version>0.0.3</version>
-	<packaging>war</packaging>
+	<version>0.1.0</version>
+	<packaging>jar</packaging>
 
 	<name>UAVManageSystem</name>
 	<description>This is demo for UAV manage system</description>
@@ -50,11 +50,11 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-tomcat</artifactId>
-			<scope>provided</scope>
-		</dependency>
+		<!--<dependency>-->
+			<!--<groupId>org.springframework.boot</groupId>-->
+			<!--<artifactId>spring-boot-starter-tomcat</artifactId>-->
+			<!--<scope>provided</scope>-->
+		<!--</dependency>-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

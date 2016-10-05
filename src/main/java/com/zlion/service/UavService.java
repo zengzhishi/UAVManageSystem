@@ -7,6 +7,8 @@ import com.zlion.repository.BlockApplicationRepository;
 import com.zlion.repository.LocationRepository;
 import com.zlion.repository.UavRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +28,9 @@ public class UavService {
     private LocationRepository locationRepository;
     private BlockApplicationRepository blockApplicationRepository;
 
-    private int countvalue;
+    private long countvalue;
     private final static SimpleDateFormat sim = new SimpleDateFormat("yyyy-MM-dd hh");
     private static final int ForwardDateNum = 1;
-
 
     @Autowired
     public UavService(UavRepository uavRepository, LocationRepository locationRepository, BlockApplicationRepository blockApplicationRepository) {
@@ -44,8 +45,32 @@ public class UavService {
         return locationRepository.findByUavId(uavId);
     }
 
-    public List<Location> getLocationsByTime(String uuid, String strBeginTime, String strEndTime){
+    //未做分页查询的位置查询
+//    public List<Location> getLocationsByTime(String uuid, String strBeginTime, String strEndTime){
+//
+//        Long uavId = uavRepository.findByUuid(uuid).getId();
+//        Date beginDate, endDate;
+//        try{
+//            beginDate = sim.parse(strBeginTime);
+//            endDate = sim.parse(strEndTime);
+//        }catch (ParseException e){
+//            e.printStackTrace();
+//            return null;
+//        }
+//        List<Location> locationList = locationRepository.findByUavIdAndTimeBetween(uavId, beginDate, endDate);
+//        return locationList;
+//    }
 
+    public boolean checkUuidOwnerWithLoginUser(String uuid, Long userId){
+        Uav uav = uavRepository.findByUuid(uuid);
+        if (uav.getUser_id() == userId){
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional
+    public List<Location> getLocationsByTime(String uuid, String strBeginTime, String strEndTime, int page, int rows){
         Long uavId = uavRepository.findByUuid(uuid).getId();
         Date beginDate, endDate;
         try{
@@ -55,17 +80,13 @@ public class UavService {
             e.printStackTrace();
             return null;
         }
-        List<Location> locationList = locationRepository.findByUavIdAndTimeBetween(uavId, beginDate, endDate);
-        return locationList;
-    }
 
-    @Transactional
-    public List<Location> getLocationsByTime(String uuid, Date starttime, Date endtime, int page, int rows){
-        Long uavId = uavRepository.findByUuid(uuid).getId();
-//        List<Location> locationList = locationRepository.findByUavId(uavId);
-        List<Location> locationList = locationRepository.findByUavIdAndTimeBetween(uavId,starttime,endtime);
-//        countvalue=locationList.size();
-////      此处进行按时间排序
+        PageRequest pageRequest = new PageRequest(page-1, rows);
+        Page<Location> pages;
+        Page<Location> locationPage = locationRepository.findByUavIdAndTimeBetweenAndPage(uavId, beginDate, endDate, pageRequest);
+        List<Location> locationList = locationPage.getContent();
+        countvalue = locationPage.getTotalElements();
+//      此处进行按时间排序
 //        sortClass sort = new sortClass();//建立排序规则
 //        Collections.sort(locationList,sort);//按照从小到大排序
 //        Collections.reverse(locationList);//反转顺序
@@ -77,7 +98,7 @@ public class UavService {
     }
 
     @Transactional
-    public int getCountvalue(){
+    public long getCountvalue(){
         return countvalue;
     }
 

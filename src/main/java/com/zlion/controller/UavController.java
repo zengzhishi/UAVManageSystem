@@ -32,47 +32,73 @@ public class UavController {
         this.uavService = uavService;
     }
 
-    /*
-    查看无人机的位置信息,需要做分页,需要实现按照时间来查询    暂时无法测试
+    /**
+     *
+     *
+     * @api {get} /uav/locations 分页查询无人机的位置信息,按照时间和无人机的uuid来查询
+     * @apiName Locations for uav
+     * @apiGroup Uav
+     * @apiVersion 0.2.0
+     *
+     * @apiParam {String} uuid UUID of the uav.
+     * @apiParam {String} beginTime Locations from Date (Date Time Format: yyyy-MM-dd hh).
+     * @apiParam {String} endTime Locations to Date (Date Time Format: yyyy-MM-dd hh).
+     * @apiParam {Number} page Present page index.
+     * @apiParam {Number} rows Number of locations for one page.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     * @apiSource {[Locations,..]} Data One page data for locations
+     * @apiSource {Number} Counts Total number of elements for locations
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 200,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError AuthException User can't list this uav locations.
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 101 AuthException
+     *     {
+     *       "Code": 101,
+     *       "Msg": "User can't show locations of uav with uuid:{uuid}"
+     *     }
+     *
      */
     @ResponseBody
     @RequestMapping(value = "/locations", method = RequestMethod.GET)
     public Result uavLocations(HttpServletRequest request, HttpSession session){
         Result jsonRender = new Result();
-        jsonRender = jsonRender.okForList();
 
-//        //分页的基本参数，根据需要自己设置需要的参数把
-//        int page = Integer.parseInt(request.getParameter("page"));
-//        int rows = Integer.parseInt(request.getParameter("rows"));
-        String strBeginTime = request.getParameter("beginTime");
-        String strEndTime = request.getParameter("endTime");
-
-        int page = 1, rows = 10;
-//        long startTimeStamp = new Date().getTime();
-//        long endTimeStamp = new Date().getTime();
-//        //这里用的是时间戳,需要做转化
-//        try{
-//            startTimeStamp = Long.parseLong(request.getParameter("timeStart"));
-//            endTimeStamp = Long.parseLong(request.getParameter("timeEnd"));
-//        }catch (NumberFormatException e){
-//            e.printStackTrace();
-//        }
-
-
+        Long userId = (Long) session.getAttribute("authId");
         String uuid = request.getParameter("uuid");
 
+        if (session.getAttribute("adminId") != null || uavService.checkUuidOwnerWithLoginUser(uuid, userId)){
+            jsonRender = jsonRender.okForList();
 
-//        Date startTime = new Date(startTimeStamp*1000L);
-//        Date endTime = new Date(endTimeStamp*1000L);
-        List<Location> locations = uavService.getLocationsByTime(uuid, strBeginTime, strEndTime);
-//        List<Location> locationlist = uavService.getLocationsByTime(uuid,startTime,endTime,page,rows);
-//
-//        jsonRender.put("Date",locationlist);
-//        jsonRender.put("Lenth",uavService.getCountvalue());
-//        jsonRender.put("startDate", startTime.toString());
-//        jsonRender.put("endDate", endTime.toString());
+            String strBeginTime = request.getParameter("beginTime");
+            String strEndTime = request.getParameter("endTime");
 
-        jsonRender.put("data", locations);
+            int page = 1, rows = 10;
+            //分页的基本参数，根据需要自己设置需要的参数把
+            if (!(request.getParameter("page").equals("")||request.getParameter("rows")==null)){
+                page = Integer.parseInt(request.getParameter("page"));
+                rows = Integer.parseInt(request.getParameter("rows"));
+            }
+
+            List<Location> locationlist = uavService.getLocationsByTime(uuid, strBeginTime, strEndTime, page, rows);
+
+            jsonRender.put("Date",locationlist);
+            jsonRender.put("Counts",uavService.getCountvalue());
+        }
+        else{
+            jsonRender = jsonRender.needAuth();
+            jsonRender.put("Msg", "User can't show locations of uav with uuid:" + uuid);
+        }
+
         return jsonRender;
     }
 
@@ -81,18 +107,23 @@ public class UavController {
      */
     @ResponseBody
     @RequestMapping(value = "/location/add", method = RequestMethod.POST)
-    public void addUavLocation(HttpServletRequest request, HttpSession session){
+    public void addUavLocation(HttpServletRequest request){
 
         String uuid = request.getParameter("uuid");
         double latitude = Double.parseDouble(request.getParameter("latitude"));
         double longitude = Double.parseDouble(request.getParameter("longitude"));
         double height = Double.parseDouble(request.getParameter("height"));
 
+        String geohash = GeohashUtil.encode(latitude, longitude, 6);
+
         uavService.addLocation(uuid,latitude,longitude,height);
     }
 
-    /*
-    geohash的位置编码，用来判断用法的，先不用测试
+    /**
+     * geohash的位置编码，用来判断用法的，先不用测试
+     * @param request (latitude,longitude,beginDate,endDate)
+     * @param session
+     * @return
      */
     @ResponseBody
     @RequestMapping(value = "/location/encode", method = RequestMethod.GET)
@@ -140,7 +171,7 @@ public class UavController {
     }
 
     @ResponseBody
-    @RequestMapping(value = "/location/apply", method = RequestMethod.GET)
+    @RequestMapping(value = "/block/apply", method = RequestMethod.GET)
     public Result getApplyList(HttpServletRequest request, HttpSession session){
 
         Result jsonRender = new Result();
