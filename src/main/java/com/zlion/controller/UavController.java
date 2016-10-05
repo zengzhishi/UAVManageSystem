@@ -116,6 +116,8 @@ public class UavController {
 
         String geohash = GeohashUtil.encode(latitude, longitude, 6);
 
+
+
         uavService.addLocation(uuid,latitude,longitude,height);
     }
 
