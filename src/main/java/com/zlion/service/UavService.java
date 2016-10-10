@@ -51,12 +51,15 @@ public class UavService {
     }
 
     @Transactional
-    public List<Location> getLocationsByTime(String uuid, String strBeginTime, String strEndTime, int page, int rows){
+    public List<Location> getLocationsByTime(String uuid, String strBeginTime, String strEndTime, int page, int rows) throws DateCompareException{
         Long uavId = uavRepository.findByUuid(uuid).getId();
         Date beginDate, endDate;
         try{
             beginDate = sim.parse(strBeginTime);
             endDate = sim.parse(strEndTime);
+            if (beginDate.getTime() >= endDate.getTime()){
+                throw new DateCompareException("End Date can't be forwarder than start date!");
+            }
         }catch (ParseException e){
             e.printStackTrace();
             return null;
@@ -98,21 +101,6 @@ public class UavService {
     }
 
 
-    public Uav getUavDetail(String uuid){
-        Uav uav = uavRepository.findByUuid(uuid);
-        return uav;
-    }
-
-    public Long getUavBelong(String uuid){
-        Uav uav = uavRepository.findByUuid(uuid);
-        return uav.getUser_id();
-    }
-
-    public void delUav(Long userId, String uuid) {
-        Uav uav = uavRepository.findByUuid(uuid);
-        uavRepository.delete(uav);
-    }
-
     public List<Long> transferStringToLong(List<String> uuidList) throws NullPointerException{
 
         List<Long> uavIdList = new ArrayList<Long>();
@@ -122,13 +110,18 @@ public class UavService {
     }
 
 
+    @Transactional
     public boolean addBlockApply(String geohash, String strBeginDate, String strEndDate,
-                                 boolean confirm, List<Long> uavIdList) throws ParseException{
+                                 boolean confirm, List<Long> uavIdList, Long applyUserId) throws ParseException, DateCompareException{
 
         Date beginDate = sim.parse(strBeginDate);
         Date endDate = sim.parse(strEndDate);
+        if (beginDate.getTime() >= endDate.getTime()){
+            throw new DateCompareException("End Date can't be forwarder than start date!");
+        }
 
-        BlockApplication blockApplication = new BlockApplication(geohash, beginDate, endDate, uavIdList , confirm, null);
+//        BlockApplication blockApplication = new BlockApplication(geohash, beginDate, endDate, uavIdList , confirm, null);
+        BlockApplication blockApplication = new BlockApplication(geohash, beginDate, endDate, uavIdList, applyUserId, confirm, null);
         blockApplicationRepository.save(blockApplication);
         return false;
     }
@@ -143,7 +136,7 @@ public class UavService {
      *
      * }
      */
-    public Map<String, Object> getBlockApplyState(String geohash, String strBeginDate, String strEndDate) throws ParseException{
+    public Map<String, Object> getBlockApplyState(String geohash, String strBeginDate, String strEndDate) throws ParseException, DateCompareException {
 
         Map<String, Object> result = new HashMap<String, Object>();
         Date beginDate, endDate;
@@ -151,6 +144,9 @@ public class UavService {
         //转化时间为Data类型
         beginDate = sim.parse(strBeginDate);
         endDate = sim.parse(strEndDate);
+        if (beginDate.getTime() >= endDate.getTime()){
+            throw new DateCompareException("End Date can't be forwarder than start date!");
+        }
         //判断是否有申请
         List<BlockApplication> applyList = blockApplicationRepository.getByGeohashAndTimeBetween(geohash, beginDate, endDate);
         if (applyList.size() == 0){
@@ -166,14 +162,17 @@ public class UavService {
         return result;
     }
 
-    public List<BlockApplication> getBlockApplyState(String geohash, String strBeginDate, String strEndDate, int page, int rows) throws ParseException{
+    public List<BlockApplication> getBlockApplyState(String geohash, String strBeginDate, String strEndDate, int page, int rows) throws ParseException, DateCompareException{
 
         Map<String, Object> result = new HashMap<String, Object>();
         Date beginDate, endDate;
 
-      //转化时间为Data类型
+       //转化时间为Data类型
         beginDate = sim.parse(strBeginDate);
         endDate = sim.parse(strEndDate);
+        if (beginDate.getTime() >= endDate.getTime()){
+            throw new DateCompareException("End Date can't be forwarder than start date!");
+        }
         //判断是否有申请
         PageRequest pageRequest = new PageRequest(page-1, rows);
         Page<BlockApplication> applyPage = blockApplicationRepository.getByGeohashAndTimeBetween(geohash, beginDate, endDate, pageRequest);
@@ -182,7 +181,7 @@ public class UavService {
         return applyPage.getContent();
     }
 
-    public Map<String, Object> getBlockApplyState(String geohash) throws ParseException{
+    public Map<String, Object> getBlockApplyState(String geohash) throws ParseException, DateCompareException{
 
         Date date = new Date();
         String strBeginDate = sim.format(new Date());
@@ -214,14 +213,51 @@ public class UavService {
         return getEndDateByLasting(strBeginDate, ForwardDateNum);
     }
 
+    @Transactional
+    public void deleteBlockApplication(String id) throws Exception{
+        blockApplicationRepository.delete(id);
+    }
+
+    public BlockApplication getBlockApplication(String id) {
+        return blockApplicationRepository.findOne(id);
+    }
+
+    @Transactional
+    public void updateBlockApplication(String id, String strBeginTime, String strEndTime, List<Long> uavIdList) throws Exception{
+
+        //转化时间为Data类型
+        Date beginDate = sim.parse(strBeginTime);
+        Date endDate = sim.parse(strEndTime);
+        if (beginDate.getTime() >= endDate.getTime()){
+            throw new DateCompareException("End Date can't be forwarder than start date!");
+        }
+
+        BlockApplication blockApplication = blockApplicationRepository.findOne(id);
+        blockApplication.setStartDate(beginDate);
+        blockApplication.setEndDate(endDate);
+        blockApplication.setUavs(uavIdList);
+        blockApplication.setConfirm(false);
+        blockApplicationRepository.delete(id);
+        blockApplicationRepository.save(blockApplication);
+    }
+
+
+    @Transactional
+    public List<BlockApplication> getUnconfirmBlockApplications(int page, int rows){
+        PageRequest pageRequest = new PageRequest(page-1, rows);
+        Page<BlockApplication> applyPage = blockApplicationRepository.findByConfirm(false, pageRequest);
+        countvalue = applyPage.getTotalElements();
+        return applyPage.getContent();
+    }
+
 }
 
-class sortClass implements Comparator{
-    @Override
-    public int compare(Object arg0,Object arg1){
-        Location location0 = (Location)arg0;
-        Location location1 = (Location)arg1;
-        int flag = location0.getDate().compareTo(location1.getDate());
-        return  flag;
-    }
-}
+//class sortClass implements Comparator{
+//    @Override
+//    public int compare(Object arg0,Object arg1){
+//        Location location0 = (Location)arg0;
+//        Location location1 = (Location)arg1;
+//        int flag = location0.getDate().compareTo(location1.getDate());
+//        return  flag;
+//    }
+//}

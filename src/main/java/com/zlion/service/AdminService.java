@@ -1,8 +1,10 @@
 package com.zlion.service;
 
 import com.zlion.model.Admin;
+import com.zlion.model.BlockApplication;
 import com.zlion.model.User;
 import com.zlion.repository.AdminRepository;
+import com.zlion.repository.BlockApplicationRepository;
 import com.zlion.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,11 +23,13 @@ public class AdminService {
 
     private AdminRepository adminRepository;
     private UserRepository userRepository;
+    private BlockApplicationRepository blockApplicationRepository;
 
     @Autowired
-    public AdminService(AdminRepository adminRepository, UserRepository userRepository){
+    public AdminService(AdminRepository adminRepository, UserRepository userRepository, BlockApplicationRepository blockApplicationRepository){
         this.adminRepository = adminRepository;
         this.userRepository = userRepository;
+        this.blockApplicationRepository = blockApplicationRepository;
     }
 
     //检验用户是否存在数据库中
@@ -131,4 +135,13 @@ public class AdminService {
         }
         return false;
     }
+
+    @Transactional
+    public void confirmBlockApplication(String id) throws Exception{
+        BlockApplication blockApplication = blockApplicationRepository.findOne(id);
+        blockApplication.setConfirm(true);
+        blockApplicationRepository.delete(id);
+        blockApplicationRepository.save(blockApplication);
+    }
+
 }

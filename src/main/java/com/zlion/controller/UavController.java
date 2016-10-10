@@ -3,6 +3,7 @@ package com.zlion.controller;
 import com.alibaba.fastjson.JSON;
 import com.zlion.model.BlockApplication;
 import com.zlion.model.Location;
+import com.zlion.service.DateCompareException;
 import com.zlion.service.UavService;
 import com.zlion.util.GeohashUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.text.ParseException;
 import java.util.*;
@@ -59,12 +60,18 @@ public class UavController {
      *     }
      *
      * @apiError AuthException User can't list this uav locations.
+     * @apiError ArgumentException End Date can't be forwarder than start date!
      *
      * @apiErrorExample Error-Response:
      *     HTTP/1.1 101 AuthException
      *     {
      *       "Code": 101,
      *       "Msg": "User can't show locations of uav with uuid:{uuid}"
+     *     }
+     *     HTTP/1.1 102 ArgumentException
+     *     {
+     *       "Code": 102,
+     *       "Msg": "End Date can't be forwarder than start date!"
      *     }
      *
      */
@@ -89,11 +96,15 @@ public class UavController {
                 page = Integer.parseInt(request.getParameter("page"));
                 rows = Integer.parseInt(request.getParameter("rows"));
             }
-
-            List<Location> locationlist = uavService.getLocationsByTime(uuid, strBeginTime, strEndTime, page, rows);
-
-            jsonRender.put("Date",locationlist);
-            jsonRender.put("Counts",uavService.getCountvalue());
+            try {
+                List<Location> locationlist = uavService.getLocationsByTime(uuid, strBeginTime, strEndTime, page, rows);
+                jsonRender.put("Date",locationlist);
+                jsonRender.put("Counts",uavService.getCountvalue());
+            }catch (DateCompareException e){
+                e.printStackTrace();
+                jsonRender = jsonRender.argError();
+                jsonRender.put("Msg", e.getMessage());
+            }
         }
         else{
             jsonRender = jsonRender.needAuth();
@@ -133,15 +144,40 @@ public class UavController {
     }
 
 
+    /**
+     *
+     * @api {get} /location/encode 根据一个经纬度来编码为geohash，并返回geohash和该geohash包含的区块范围
+     * @apiName Locations encode for uav
+     * @apiGroup Uav
+     * @apiVersion 0.3.3
+     *
+     * @apiParam {String} latitude Latitude of location of apply block.
+     * @apiParam {String} longitude Longitude of location of apply block.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     * @apiSource {Locations} Locations locations [minLat, maxLat, minLng, maxLng].
+     * @apiSource {String} Geohash Geohash code for location.
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 100 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok",
+     *       "Geohash": {geohash},
+     *       "Locations": [
+     *          minLat, maxLat, minLng, maxLng
+     *       ]
+     *     }
+     *
+     *
+     */
     @ResponseBody
     @RequestMapping(value = "/location/encode", method = RequestMethod.GET)
     public Result getApplyLocation(HttpServletRequest request, HttpSession session){
 
-//        String uuid = request.getParameter("uuid");
         double latitude = Double.parseDouble(request.getParameter("latitude"));
         double longitude = Double.parseDouble(request.getParameter("longitude"));
-        String strBeginDate = request.getParameter("beginDate");
-        String strEndDate = request.getParameter("endDate");
 
         String geohash = GeohashUtil.encode(latitude, longitude, 6);
 
@@ -159,28 +195,8 @@ public class UavController {
         data.put("minLng", minLng);
         data.put("maxLng", maxLng);
 
-        jsonRender.put("geohash", geohash);
-        jsonRender.put("locations", data);
-
-        try{
-            if (strBeginDate != null && strEndDate != null){
-                Map<String, Object> result = uavService.getBlockApplyState(geohash, strBeginDate, strEndDate);
-            }
-            else if (strBeginDate != null){
-
-            }
-            else if (strBeginDate == null && strEndDate != null){
-                jsonRender = jsonRender.argError();
-            }
-            else{
-
-            }
-        }catch (ParseException e){
-            e.printStackTrace();
-            jsonRender = jsonRender.multiError();
-            jsonRender.put("Msg", "Date Format Error!");
-        }
-
+        jsonRender.put("Geohash", geohash);
+        jsonRender.put("Locations", data);
 
         return jsonRender;
     }
@@ -214,7 +230,7 @@ public class UavController {
      *       "Msg": "ok"
      *     }
      *
-     * @apiError ArgumentException Some apply Uavs' uuids are not in system! / Start Date Can't be empty! / Date Format Error! / Block or location can't be empty.(多种报错原因)
+     * @apiError ArgumentException Some apply Uavs' uuids are not in system! / Start Date Can't be empty! / End Date can't be forwarder than start date! / Date Format Error! / Block or location can't be empty.(多种报错原因)
      * @apiError AuthException Action need auth.
      * @apiError RepeatedException Location has been applied.
      *
@@ -308,11 +324,11 @@ public class UavController {
             if ((boolean)msg.get("state")){
                     if (session.getAttribute("adminId") != null){
                         //admin的区块申请操作
-                        uavService.addBlockApply(geohash, strStartDate, strEndDate, true, uavIdList);
+                        uavService.addBlockApply(geohash, strStartDate, strEndDate, true, uavIdList, -1L);
                     }
                     else if (session.getAttribute("authId") != null){
                         //普通用户的申请操作
-                        uavService.addBlockApply(geohash, strStartDate, strEndDate, false, uavIdList);
+                        uavService.addBlockApply(geohash, strStartDate, strEndDate, false, uavIdList, (Long)session.getAttribute("authId"));
                     }
                     else{
                         jsonRender = jsonRender.needAuth();
@@ -328,6 +344,10 @@ public class UavController {
             e.printStackTrace();
             jsonRender = jsonRender.argError();
             jsonRender.put("Msg", "Date Format Error!");
+        }catch (DateCompareException e){
+            e.printStackTrace();
+            jsonRender = jsonRender.argError();
+            jsonRender.put("Msg", e.getMessage());
         }
 
 
@@ -337,8 +357,7 @@ public class UavController {
 
     /**
      *
-     *
-     * @api {get} /uav/blocks Show block apply list
+     * @api {get} /uav/blockApplications Show block apply list
      * @apiName Block applications
      * @apiGroup Uav
      * @apiVersion 0.3.1
@@ -361,7 +380,7 @@ public class UavController {
      *       "Msg": "ok"
      *     }
      *
-     * @apiError ArgumentException Time arguments can't be empty! / Date Format Error! / Block or location can't be empty.(多种报错原因)
+     * @apiError ArgumentException Time arguments can't be empty! / Date Format Error! / End Date can't be forwarder than start date! / Block or location can't be empty.(多种报错原因)
      * @apiError AuthException Action need auth.
      *
      * @apiErrorExample Error-Response:
@@ -379,7 +398,7 @@ public class UavController {
      *     }
      */
     @ResponseBody
-    @RequestMapping(value = "/blocks", method = RequestMethod.GET)
+    @RequestMapping(value = "/blockApplications", method = RequestMethod.GET)
     public Result getBlockApply(HttpServletRequest request, HttpSession session){
         Result jsonRender = new Result();
 
@@ -429,8 +448,198 @@ public class UavController {
             e.printStackTrace();
             jsonRender = jsonRender.argError();
             jsonRender.put("Msg", "Date Format Error!");
+        }catch (DateCompareException e){
+            e.printStackTrace();
+            jsonRender = jsonRender.argError();
+            jsonRender.put("Msg", e.getMessage());
         }
         return jsonRender;
     }
+
+
+    /**
+     * @api {delete} /blockApplication Block Application delete
+     * @apiName Admin delete block application
+     * @apiGroup Uav
+     * @apiVersion 0.3.2
+     *
+     * @apiParam {String} id Id of the block application.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 100 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError IllegalMethodError Method has some exception.
+     * @apiError DataNotFoundException Not found data.
+     * @apiError AuthException No Authorized!
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 104 DataNotFoundException
+     *     {
+     *       "Msg": "Not found such block application with id:{id}"
+     *       "Code": 104
+     *     }
+     *
+     *     HTTP/1.1 101 AuthException
+     *     {
+     *       "Code": 101,
+     *       "Msg": "No Authorized!"
+     *     }
+     *
+     *     HTTP/1.1 103 IllegalMethodError
+     *     {
+     *       "Code": 103,
+     *       "Msg": "Some problem happen in cancel block application."
+     *     }
+     *
+     */
+    @ResponseBody
+    @RequestMapping(value = "/blockApplication", method = RequestMethod.DELETE)
+    public Result blockApplicationRemove(HttpServletRequest request, HttpSession session){
+        Result jsonRender = new Result();
+
+        String id = request.getParameter("id");
+        try{
+            BlockApplication blockApplication = uavService.getBlockApplication(id);
+            if (blockApplication != null){
+                if (session.getAttribute("adminId") != null)
+                    uavService.deleteBlockApplication(id);
+                else if (session.getAttribute("authId") != null
+                        && blockApplication.getApplyUserId() == (Long)session.getAttribute("authId")){
+                    uavService.deleteBlockApplication(id);
+                }else{
+                    jsonRender = jsonRender.needAuth();
+                    jsonRender.put("Msg", "No Authorized!");
+                }
+            }
+            else{
+                jsonRender.put("Code", 104);
+                jsonRender.put("Msg", "Not found such block application with id:" + id);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            jsonRender.put("Code", 103);
+            jsonRender.put("Msg", "Some problem happen in cancel block application.");
+        }
+
+        return jsonRender;
+    }
+
+    /**
+     * @api {post} /blockApplication/update Block Application info update
+     * @apiName update action for block application
+     * @apiGroup Uav
+     * @apiVersion 0.3.3
+     *
+     * @apiParam {String} id Id of the block application.
+     * @apiParam {String} beginTime Apply Date for New (Date Time Format: yyyy-MM-dd hh).
+     * @apiParam {String} endTime Apply Date for New (Date Time Format: yyyy-MM-dd hh).
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 100 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError IllegalMethodError Method has some exception.
+     * @apiError AuthException No Authorized!
+     * @apiError ArgumentException Some apply Uavs' uuids are not in system! / Time arguments Can't be empty! / End Date can't be forwarder than start date! / Date Format Error! / Uuid list can't be empty for auth.(多种报错原因)
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 101 AuthException
+     *     {
+     *       "Code": 101,
+     *       "Msg": "No Authorized!"
+     *     }
+     *
+     *     HTTP/1.1 103 IllegalMethodError
+     *     {
+     *       "Code": 103,
+     *       "Msg": "Method has some exception."
+     *     }
+     *
+     *     HTTP/1.1 102 ArgumentException
+     *     {//argumentException 有多种类型的参数错误，具体错误原因以Msg为准
+     *       "Code": 102,
+     *       "Msg": "Some apply Uavs' uuids are not in system!"
+     *     }
+     *
+     */
+    @ResponseBody
+    @RequestMapping(value = "/blockApplication/update", method = RequestMethod.POST)
+    public Result updateBlockApplication(HttpServletRequest request, HttpSession session){
+
+        Result jsonRender = new Result();
+
+        String id = request.getParameter("id");
+
+        String strBeginTime = request.getParameter("beginTime");
+        String strEndTime = request.getParameter("endTime");
+        if ((strBeginTime.equals("")||strBeginTime==null) || (strEndTime.equals("")||strEndTime==null)){
+            jsonRender = jsonRender.argError();
+            jsonRender.put("Msg", "Time arguments can't be empty!");
+            return jsonRender;
+        }
+
+        try{
+            List<String> uuidList = JSON.parseArray(request.getParameter("uuidList"), String.class);
+            List<Long> uavIdList = new ArrayList<Long>();
+
+            if (uuidList != null && !"".equals(uuidList)){
+                try {
+                    uavIdList = uavService.transferStringToLong(uuidList);
+                }catch (NullPointerException e){
+                    jsonRender.argError();
+                    jsonRender.put("Msg", "Some apply Uavs' uuids are not in system!");
+                    return jsonRender;
+                }
+                if ((session.getAttribute("adminId") != null && (Long)uavService.getBlockApplication(id).getApplyUserId() == -1L)
+                        || (session.getAttribute("authId") != null && (Long)session.getAttribute("authId") == uavService.getBlockApplication(id).getApplyUserId())){
+                    uavService.updateBlockApplication(id, strBeginTime, strEndTime, uavIdList);
+                }
+                else{
+                    jsonRender = jsonRender.needAuth();
+                    jsonRender.put("Msg", "No Authorized!");
+                }
+            }
+            else{
+                if (session.getAttribute("authId") != null && (Long)session.getAttribute("authId") == uavService.getBlockApplication(id).getApplyUserId()){
+                    jsonRender.argError();
+                    jsonRender.put("Msg", "Uuid list can't be empty for auth");
+                }
+                else if (session.getAttribute("adminId") != null && -1L == uavService.getBlockApplication(id).getApplyUserId()){
+                    uavService.updateBlockApplication(id, strBeginTime, strEndTime, uavIdList);
+                }
+                else{
+                    jsonRender = jsonRender.needAuth();
+                    jsonRender.put("Msg", "No Authorized!");
+                }
+            }
+
+        }catch (ParseException pe){
+            pe.printStackTrace();
+            jsonRender = jsonRender.argError();
+            jsonRender.put("Msg", "Date Format Error!");
+        }catch (Exception e){
+            e.printStackTrace();
+            jsonRender = jsonRender.illegalMethod();
+            jsonRender.put("Msg", "Method has some exception.");
+        }
+        return jsonRender;
+    }
+
+
+
+
 
 }

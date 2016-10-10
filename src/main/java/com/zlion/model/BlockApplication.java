@@ -19,6 +19,7 @@ public class BlockApplication {
     private Date endDate;
 
     private List<Long> uavs = new ArrayList<Long>();
+    private Long applyUserId;
 
     private boolean confirm;
     private String msg;
@@ -26,13 +27,22 @@ public class BlockApplication {
     public BlockApplication() {
     }
 
-    public BlockApplication(String geohash, Date startDate, Date endDate, List<Long> uavs, boolean confirm, String msg) {
+    public BlockApplication(String geohash, Date startDate, Date endDate, List<Long> uavs, Long applyUserId, boolean confirm, String msg) {
         this.geohash = geohash;
         this.startDate = startDate;
         this.endDate = endDate;
         this.uavs = uavs;
+        this.applyUserId = applyUserId;
         this.confirm = confirm;
         this.msg = msg;
+    }
+
+    public Long getApplyUserId() {
+        return applyUserId;
+    }
+
+    public void setApplyUserId(Long applyUserId) {
+        this.applyUserId = applyUserId;
     }
 
     public String getId() {
