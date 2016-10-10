@@ -1,8 +1,6 @@
 package com.zlion.controller;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.zlion.model.BlockApplication;
 import com.zlion.model.Location;
 import com.zlion.service.UavService;
@@ -15,12 +13,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.text.ParseException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by zzs on 2016/9/2.
@@ -88,7 +84,8 @@ public class UavController {
 
             int page = 1, rows = 10;
             //分页的基本参数，根据需要自己设置需要的参数把
-            if (!(request.getParameter("page").equals("")||request.getParameter("rows")==null)){
+            if (!(request.getParameter("page").equals("")||request.getParameter("page")==null)
+                    && !(request.getParameter("rows")==null||request.getParameter("rows").equals(""))){
                 page = Integer.parseInt(request.getParameter("page"));
                 rows = Integer.parseInt(request.getParameter("rows"));
             }
@@ -209,8 +206,6 @@ public class UavController {
      *
      * @apiSource {Number} Code Return code of state
      * @apiSource {String} Msg Msg of state
-     * @apiSource {[Locations,..]} Data One page data for locations
-     * @apiSource {Number} Counts Total number of elements for locations
      *
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 100 OK
@@ -245,21 +240,22 @@ public class UavController {
      */
     @ResponseBody
     @RequestMapping(value = "/block/apply", method = RequestMethod.POST)
-    public Result getApplyList(HttpServletRequest request, HttpSession session){
+    public Result addApplyList(HttpServletRequest request, HttpSession session){
         Result jsonRender = new Result();
 
         List<String> uuidList = JSON.parseArray(request.getParameter("uuidList"), String.class);
-        List<Long> uavIdList;
+        List<Long> uavIdList = new ArrayList<Long>();
 
-        try {
-            uavIdList = uavService.transferStringToLong(uuidList);
-        }catch (NullPointerException e){
-            jsonRender.argError();
-            jsonRender.put("Msg", "Some apply Uavs' uuids are not in system!");
-            return jsonRender;
+        if (uuidList != null && !"".equals(uuidList)){
+            try {
+                uavIdList = uavService.transferStringToLong(uuidList);
+            }catch (NullPointerException e){
+                jsonRender.argError();
+                jsonRender.put("Msg", "Some apply Uavs' uuids are not in system!");
+                return jsonRender;
+            }
         }
 
-        System.out.println(uavIdList);
         String geohash = request.getParameter("geohash");
 
         String strStartDate = request.getParameter("beginTime");
@@ -338,5 +334,103 @@ public class UavController {
         return jsonRender;
     }
 
+
+    /**
+     *
+     *
+     * @api {get} /uav/blocks Show block apply list
+     * @apiName Block applications
+     * @apiGroup Uav
+     * @apiVersion 0.3.1
+     *
+     * @apiParam {String} beginTime Locations from Date (Date Time Format: yyyy-MM-dd hh).
+     * @apiParam {String} endTime Locations to Date (Date Time Format: yyyy-MM-dd hh).
+     * @apiParam {String} geohash Geohash code for the block you apply(区块geohash编码,可以为空,但是经纬度和geohash不能同时为空,geohash优先级大于经纬度）
+     * @apiParam {String} latitude Latitude of location of apply block.
+     * @apiParam {String} longitude Longitude of location of apply block.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     * @apiSource {[block,..]} Data One page data for locations
+     * @apiSource {Number} Counts Total number of elements for locations
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 200,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError ArgumentException Time arguments can't be empty! / Date Format Error! / Block or location can't be empty.(多种报错原因)
+     * @apiError AuthException Action need auth.
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 102 ArgumentException
+     *     {
+     *       //argumentException 有多种类型的参数错误，具体错误原因以Msg为准
+     *       "Code": 102,
+     *       "Msg": "Some apply Uavs' uuids are not in system!"
+     *     }
+     *
+     *     HTTP/1.1 101 AuthException
+     *     {
+     *       "Code": 101,
+     *       "Msg": "Action need auth"
+     *     }
+     */
+    @ResponseBody
+    @RequestMapping(value = "/blocks", method = RequestMethod.GET)
+    public Result getBlockApply(HttpServletRequest request, HttpSession session){
+        Result jsonRender = new Result();
+
+        if (session.getAttribute("authId")==null && session.getAttribute("adminId")==null){
+            jsonRender = jsonRender.needAuth();
+            jsonRender.put("Msg", "Action need auth");
+            return jsonRender;
+        }
+
+        String strBeginTime = request.getParameter("beginTime");
+        String strEndTime = request.getParameter("endTime");
+        if ((strBeginTime.equals("")||strBeginTime==null) &&(strEndTime.equals("")||strEndTime==null)){
+            jsonRender = jsonRender.argError();
+            jsonRender.put("Msg", "Time arguments can't be empty!");
+            return jsonRender;
+        }
+
+        int page = 1, rows = 10;
+        //分页的基本参数，根据需要自己设置需要的参数把
+        if (!(request.getParameter("page").equals("")||request.getParameter("page")==null)
+                && !(request.getParameter("rows")==null||request.getParameter("rows").equals(""))){
+            page = Integer.parseInt(request.getParameter("page"));
+            rows = Integer.parseInt(request.getParameter("rows"));
+        }
+
+        String geohash = request.getParameter("geohash");
+        //转化geohash code
+        if (geohash == null || "".equals(geohash)){
+            if ((null==request.getParameter("latitude") || "".equals(request.getParameter("latitude")))
+                    || (null==request.getParameter("latitude") || "".equals(request.getParameter("latitude")))){
+                jsonRender.argError();
+                jsonRender.put("Msg", "Block or location can't be empty");
+                return jsonRender;
+            }
+            else{
+                double latitude = Double.parseDouble(request.getParameter("latitude"));
+                double longitude = Double.parseDouble(request.getParameter("longitude"));
+                geohash = GeohashUtil.encode(latitude, longitude, 6);
+            }
+        }
+        try{
+            List<BlockApplication> applyList = uavService.getBlockApplyState(geohash, strBeginTime, strEndTime, page, rows);
+            jsonRender = jsonRender.okForList();
+            jsonRender.put("Data", applyList);
+            jsonRender.put("Counts", uavService.getCountvalue());
+        }catch (ParseException e){
+            e.printStackTrace();
+            jsonRender = jsonRender.argError();
+            jsonRender.put("Msg", "Date Format Error!");
+        }
+        return jsonRender;
+    }
 
 }

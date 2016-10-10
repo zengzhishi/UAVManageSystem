@@ -1,6 +1,8 @@
 package com.zlion.repository;
 
 import com.zlion.model.BlockApplication;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -25,4 +27,6 @@ public interface BlockApplicationRepository extends MongoRepository<BlockApplica
     @Query(value = "{'geohash':?0 ,$or: [{'endDate':{$gte:?1, $lte:?2}}, {'startDate':{$gte:?1, $lte:?2}}]}")
     public List<BlockApplication> getByGeohashAndTimeBetween(String geohash, Date beginTime, Date endTime);
 
+    @Query(value = "{'geohash':?0 ,$or: [{'endDate':{$gte:?1, $lte:?2}}, {'startDate':{$gte:?1, $lte:?2}}]}")
+    public Page<BlockApplication> getByGeohashAndTimeBetween(String geohash, Date beginTime, Date endTime, Pageable pageable);
 }

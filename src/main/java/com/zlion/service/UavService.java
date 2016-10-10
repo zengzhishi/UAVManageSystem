@@ -10,6 +10,7 @@ import com.zlion.repository.UavRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +63,6 @@ public class UavService {
         }
 
         PageRequest pageRequest = new PageRequest(page-1, rows);
-        Page<Location> pages;
         Page<Location> locationPage = locationRepository.findByUavIdAndTimeBetweenAndPage(uavId, beginDate, endDate, pageRequest);
         List<Location> locationList = locationPage.getContent();
         countvalue = locationPage.getTotalElements();
@@ -164,6 +164,22 @@ public class UavService {
         }
 
         return result;
+    }
+
+    public List<BlockApplication> getBlockApplyState(String geohash, String strBeginDate, String strEndDate, int page, int rows) throws ParseException{
+
+        Map<String, Object> result = new HashMap<String, Object>();
+        Date beginDate, endDate;
+
+      //转化时间为Data类型
+        beginDate = sim.parse(strBeginDate);
+        endDate = sim.parse(strEndDate);
+        //判断是否有申请
+        PageRequest pageRequest = new PageRequest(page-1, rows);
+        Page<BlockApplication> applyPage = blockApplicationRepository.getByGeohashAndTimeBetween(geohash, beginDate, endDate, pageRequest);
+        countvalue = applyPage.getTotalElements();
+
+        return applyPage.getContent();
     }
 
     public Map<String, Object> getBlockApplyState(String geohash) throws ParseException{
