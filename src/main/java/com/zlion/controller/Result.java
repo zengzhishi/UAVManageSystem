@@ -23,7 +23,7 @@ public class Result extends HashMap<String, Object> {
     }
 
     public Result passError(){
-        put("Code","103");
+        put("Code",103);
         put("Msg","User or Password Error");
         return this;
     }
@@ -31,6 +31,12 @@ public class Result extends HashMap<String, Object> {
     public Result illegalMethod(){
         put("Code", 104);
         put("Msg", "Illegal Action Parameters");
+        return this;
+    }
+
+    public Result multiError(){
+        put("Code", 106);
+        put("Msg", "Repeated!");
         return this;
     }
 

@@ -1,7 +1,10 @@
 package com.zlion.controller;
 
+import com.sun.org.apache.bcel.internal.generic.VariableLengthInstruction;
+import com.zlion.model.BlockApplication;
 import com.zlion.model.User;
 import com.zlion.service.AdminService;
+import com.zlion.service.UavService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.stereotype.Controller;
@@ -26,10 +29,12 @@ import java.util.Map;
 public class AdminController {
 
     private AdminService adminService;
+    private UavService uavService;
 
     @Autowired
-    public AdminController(AdminService adminService) {
+    public AdminController(AdminService adminService, UavService uavService) {
         this.adminService = adminService;
+        this.uavService = uavService;
     }
 
     /*
@@ -88,6 +93,7 @@ public class AdminController {
             jsonRender.put("Msg", "Wrong username or password");
             jsonRender.put("Code", 103);
         }
+//        jsonRender.put("header", response.getHeader("Access-Control-Allow-Origin"));
 
         return jsonRender;
     }
@@ -175,10 +181,10 @@ public class AdminController {
     使用用户的id进行查询用户的数据
      */
     /**
-     * @api {get} /admin/show/{id} Admin login system(id 为用户的id)
-     * @apiName Admin login
+     * @api {get} /admin/show/{id} Admin show user detail info(id 为用户的id)
+     * @apiName Admin show user detail
      * @apiGroup Admin
-     * @apiVersion 0.1.0
+     * @apiVersion 0.2.1
      *
      *
      * @apiSource {Number} Code Return code of state
@@ -466,7 +472,7 @@ public class AdminController {
      * @api {post} /admin/add/admin Admin add admin user
      * @apiName Admin add admin
      * @apiGroup Admin
-     * @apiVersion 0.1.0
+     * @apiVersion 0.2.2
      *
      * @apiParam {String} username Username of the admin.
      * @apiParam {String} password  Password of the admin.
@@ -482,12 +488,18 @@ public class AdminController {
      *     }
      *
      * @apiError IllegalMethodError Add admin user Error.
+     * @apiError RepeatedUser Repeating User Name.
      *
      * @apiErrorExample Error-Response:
      *     HTTP/1.1 104 IllegalMethodError
      *     {
      *       "Msg": "Illegal Action Parameters",
      *       "Code": 104
+     *     }
+     *     HTTP/1.1 105 RepeatedUser
+     *     {
+     *       "Code": 105,
+     *       "Msg": "Repeating User Name"
      *     }
      *
      */
@@ -499,6 +511,11 @@ public class AdminController {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
+        if (adminService.getAdminByUserId(username) != null){
+            jsonRender.put("Code", 105);
+            jsonRender.put("Msg", "Repeating User Name");
+            return jsonRender;
+        }
         try{
             adminService.addAdmin(username, password);
         }catch(Exception e){
@@ -568,5 +585,83 @@ public class AdminController {
         return jsonRender;
     }
 
+
+    /**
+     * @api {put} /confirm/blockApplication Block Application confirm(认证通过用户的区块申请)
+     * @apiName Admin confirm block application
+     * @apiGroup Admin
+     * @apiVersion 0.3.3
+     *
+     * @apiParam {String} id Id of the block application.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 100 OK
+     *     {
+     *       "Code": 100,
+     *       "Msg": "ok"
+     *     }
+     *
+     * @apiError IllegalMethodError Method Exception!
+     * @apiError AuthException Action need admin user!
+     *
+     * @apiErrorExample Error-Response:
+     *     HTTP/1.1 101 AuthException
+     *     {
+     *       "Code": 101,
+     *       "Msg": "Action need admin user!"
+     *     }
+     *
+     *     HTTP/1.1 105 IllegalMethodError
+     *     {
+     *       "Code": 105,
+     *       "Msg": "Method Exception!"
+     *     }
+     *
+     */
+    @ResponseBody
+    @RequestMapping(value = "/confirm/blockApplication", method = RequestMethod.PUT)
+    public Result confirmBlockApplication(HttpServletRequest request, HttpSession session){
+        Result jsonRender = new Result();
+
+        if (session.getAttribute("adminId") == null){
+            jsonRender = jsonRender.needAuth();
+            jsonRender.put("Msg", "Action need admin user!");
+            return jsonRender;
+        }
+        String id = request.getParameter("id");
+        try{
+            adminService.confirmBlockApplication(id);
+        }catch (Exception e){
+            e.printStackTrace();
+            jsonRender.put("Code", 105);
+            jsonRender.put("Msg", "Method Exception!");
+        }
+
+        return jsonRender;
+    }
+
+    @ResponseBody
+    @RequestMapping(value = "/show/unconfirm/blockApplications", method = RequestMethod.GET)
+    public Result getUnconfirmBlockApplication(HttpServletRequest request, HttpSession session){
+        Result jsonRender = new Result();
+
+        int page = 1, rows = 10;
+        //分页的基本参数，根据需要自己设置需要的参数把
+        if (!(request.getParameter("page").equals("")||request.getParameter("page")==null)
+                && !(request.getParameter("rows")==null||request.getParameter("rows").equals(""))){
+            page = Integer.parseInt(request.getParameter("page"));
+            rows = Integer.parseInt(request.getParameter("rows"));
+        }
+
+        List<BlockApplication> blockApplications = uavService.getUnconfirmBlockApplications(page, rows);
+
+        jsonRender = jsonRender.okForList();
+        jsonRender.put("Data", blockApplications);
+
+        return jsonRender;
+    }
 
 }
