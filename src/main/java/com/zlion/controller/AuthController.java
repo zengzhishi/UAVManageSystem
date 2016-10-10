@@ -215,7 +215,7 @@ public class AuthController {
      */
     @ResponseBody
     @RequestMapping(value = "/logout", method = RequestMethod.DELETE)
-    public Result authLogout(HttpServletRequest request, HttpSession session){
+    public Result authLogout(HttpServletRequest request, HttpSession session, HttpServletResponse response){
         Result jsonRender = new Result();
 
         if (session.getAttribute("auth") == null){
@@ -225,6 +225,8 @@ public class AuthController {
             session.removeAttribute("auth");
             session.removeAttribute("authId");
         }
+
+        response.setHeader("Access-Control-Allow-Origin", "*");
 
         return jsonRender;
     }
@@ -255,7 +257,7 @@ public class AuthController {
      */
     @ResponseBody
     @RequestMapping(value = "/update/detail", method = RequestMethod.POST)
-    public Result authUpdate(HttpServletRequest request, HttpSession session){
+    public Result authUpdate(HttpServletRequest request, HttpSession session, HttpServletResponse response){
         Result jsonRender = new Result();
 
         User user = (User) session.getAttribute("auth");
@@ -266,6 +268,8 @@ public class AuthController {
 
         authService.updateAuth(user);
         session.setAttribute("auth", user);
+        response.setHeader("Access-Control-Allow-Origin", "*");
+
         return jsonRender;
     }
 
@@ -301,7 +305,7 @@ public class AuthController {
      */
     @ResponseBody
     @RequestMapping(value = "/update/password", method = RequestMethod.PUT)
-    public Result authUpdatePwd(HttpServletRequest request, HttpSession session){
+    public Result authUpdatePwd(HttpServletRequest request, HttpSession session, HttpServletResponse response){
         Result jsonRender = new Result();
 
         User user = (User) session.getAttribute("auth");
@@ -315,6 +319,7 @@ public class AuthController {
             jsonRender.put("Msg", "Old password error!");
         }
 
+        response.setHeader("Access-Control-Allow-Origin", "*");
         return jsonRender;
     }
 
@@ -344,7 +349,7 @@ public class AuthController {
      */
     @ResponseBody
     @RequestMapping(value = "/uav/add", method = RequestMethod.POST)
-    public Result addUav(HttpServletRequest request, HttpSession session){
+    public Result addUav(HttpServletRequest request, HttpSession session, HttpServletResponse response){
         Result jsonRender = new Result();
 
         String uuid = request.getParameter("uuid");
@@ -354,6 +359,9 @@ public class AuthController {
 
         Uav uav = new Uav(uuid,userId,groupName,info,new Date());
         authService.addUav(uav);
+
+        response.setHeader("Access-Control-Allow-Origin", "*");
+
         return jsonRender;
     }
 
@@ -373,7 +381,7 @@ public class AuthController {
      * @apiSuccessExample Success-Response:
      *     HTTP/1.1 200 OK
      *     {
-     *       "Code": 100,
+     *       "Code": 200,
      *       "Msg": "ok"
      *       "data": [{
      *           "id": Long,
@@ -389,13 +397,14 @@ public class AuthController {
      */
     @ResponseBody
     @RequestMapping(value = "/uavs", method = RequestMethod.GET)
-    public Result getUavList(HttpServletRequest request, HttpSession session){
+    public Result getUavList(HttpServletRequest request, HttpSession session, HttpServletResponse response){
         Result jsonRender = new Result();
 
         Long userId = (Long) session.getAttribute("authId");
         List<Uav> uavs = authService.getUavs(userId);
         jsonRender = jsonRender.okForList();
         jsonRender.put("data", uavs);
+        response.setHeader("Access-Control-Allow-Origin", "*");
 
         return jsonRender;
     }

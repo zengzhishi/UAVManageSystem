@@ -1,5 +1,6 @@
 package com.zlion.service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.zlion.model.BlockApplication;
 import com.zlion.model.Location;
 import com.zlion.model.Uav;
@@ -39,27 +40,6 @@ public class UavService {
         this.blockApplicationRepository = blockApplicationRepository;
     }
 
-    @Transactional
-    public List<Location> getLocations(String uuid){
-        Long uavId = uavRepository.findByUuid(uuid).getId();
-        return locationRepository.findByUavId(uavId);
-    }
-
-    //未做分页查询的位置查询
-//    public List<Location> getLocationsByTime(String uuid, String strBeginTime, String strEndTime){
-//
-//        Long uavId = uavRepository.findByUuid(uuid).getId();
-//        Date beginDate, endDate;
-//        try{
-//            beginDate = sim.parse(strBeginTime);
-//            endDate = sim.parse(strEndTime);
-//        }catch (ParseException e){
-//            e.printStackTrace();
-//            return null;
-//        }
-//        List<Location> locationList = locationRepository.findByUavIdAndTimeBetween(uavId, beginDate, endDate);
-//        return locationList;
-//    }
 
     public boolean checkUuidOwnerWithLoginUser(String uuid, Long userId){
         Uav uav = uavRepository.findByUuid(uuid);
@@ -133,6 +113,26 @@ public class UavService {
         uavRepository.delete(uav);
     }
 
+    public List<Long> transferStringToLong(List<String> uuidList) throws NullPointerException{
+
+        List<Long> uavIdList = new ArrayList<Long>();
+        uuidList.forEach((uuid) -> uavIdList.add(uavRepository.findByUuid(uuid).getId()));
+
+        return uavIdList;
+    }
+
+
+    public boolean addBlockApply(String geohash, String strBeginDate, String strEndDate,
+                                 boolean confirm, List<Long> uavIdList) throws ParseException{
+
+        Date beginDate = sim.parse(strBeginDate);
+        Date endDate = sim.parse(strEndDate);
+
+        BlockApplication blockApplication = new BlockApplication(geohash, beginDate, endDate, uavIdList , confirm, null);
+        blockApplicationRepository.save(blockApplication);
+        return false;
+    }
+
     /**
      * Get Location application state
      *
@@ -143,25 +143,17 @@ public class UavService {
      *
      * }
      */
-    public Map<String, Object> getBlockApplyState(String geohash, String strBeginDate, String strEndDate){
+    public Map<String, Object> getBlockApplyState(String geohash, String strBeginDate, String strEndDate) throws ParseException{
 
         Map<String, Object> result = new HashMap<String, Object>();
         Date beginDate, endDate;
 
         //转化时间为Data类型
-        try{
-            beginDate = sim.parse(strBeginDate);
-            endDate = sim.parse(strEndDate);
-        }catch(ParseException e){
-            e.printStackTrace();
-            result.put("state", false);
-            result.put("msg", "Parse error!");
-            return result;
-        }
-
+        beginDate = sim.parse(strBeginDate);
+        endDate = sim.parse(strEndDate);
         //判断是否有申请
         List<BlockApplication> applyList = blockApplicationRepository.getByGeohashAndTimeBetween(geohash, beginDate, endDate);
-        if (applyList == null){
+        if (applyList.size() == 0){
             result.put("state", true);
             result.put("data", null);
         }
@@ -174,7 +166,7 @@ public class UavService {
         return result;
     }
 
-    public Map<String, Object> getBlockApplyState(String geohash){
+    public Map<String, Object> getBlockApplyState(String geohash) throws ParseException{
 
         Date date = new Date();
         String strBeginDate = sim.format(new Date());
@@ -186,6 +178,25 @@ public class UavService {
         return getBlockApplyState(geohash, strBeginDate, strEndDate);
     }
 
+    /**
+     * 将时间偏移量转化为时间截止点
+     * @param strBeginDate
+     * @param lastingTime
+     * @return
+     * @throws ParseException
+     */
+    public final String getEndDateByLasting(String strBeginDate, int lastingTime) throws ParseException{
+
+        Date beginDate = sim.parse(strBeginDate);
+        Calendar rightBegin = Calendar.getInstance();
+        rightBegin.setTime(beginDate);
+        rightBegin.add(Calendar.DAY_OF_YEAR, lastingTime);
+        return sim.format(rightBegin.getTime());
+    }
+
+    public String getEndDateByLasting(String strBeginDate) throws ParseException{
+        return getEndDateByLasting(strBeginDate, ForwardDateNum);
+    }
 
 }
 

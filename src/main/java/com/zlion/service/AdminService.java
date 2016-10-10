@@ -98,6 +98,10 @@ public class AdminService {
         adminRepository.save(new Admin(username, password));
     }
 
+    public Admin getAdminByUserId(String adminName){
+        return adminRepository.findByUsername(adminName);
+    }
+
     public Map<String, Object> deleteAdmin(String username, String confirmPwd){
         Map<String, Object> result = new HashMap<String, Object>();
         Admin admin = adminRepository.findByUsername(username);

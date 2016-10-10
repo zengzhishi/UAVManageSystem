@@ -1,7 +1,9 @@
 package com.zlion.model;
 
 import javax.persistence.Id;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by zzs on 2016/9/26.
@@ -16,17 +18,21 @@ public class BlockApplication {
     private Date startDate;
     private Date endDate;
 
-    private Long [] uavIds;
+    private List<Long> uavs = new ArrayList<Long>();
+
+    private boolean confirm;
+    private String msg;
 
     public BlockApplication() {
     }
 
-    public BlockApplication(String id, String geohash, Date startDate, Date endDate, Long[] uavIds) {
-        this.id = id;
+    public BlockApplication(String geohash, Date startDate, Date endDate, List<Long> uavs, boolean confirm, String msg) {
         this.geohash = geohash;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.uavIds = uavIds;
+        this.uavs = uavs;
+        this.confirm = confirm;
+        this.msg = msg;
     }
 
     public String getId() {
@@ -53,12 +59,12 @@ public class BlockApplication {
         this.endDate = endDate;
     }
 
-    public Long[] getUavIds() {
-        return uavIds;
+    public List<Long> getUavs() {
+        return uavs;
     }
 
-    public void setUavIds(Long[] uavIds) {
-        this.uavIds = uavIds;
+    public void setUavs(List<Long> uavs) {
+        this.uavs = uavs;
     }
 
     public String getGeohash() {
@@ -67,5 +73,25 @@ public class BlockApplication {
 
     public void setGeohash(String geohash) {
         this.geohash = geohash;
+    }
+
+    public void addUav(Long uav){
+        uavs.add(uav);
+    }
+
+    public boolean isConfirm() {
+        return confirm;
+    }
+
+    public void setConfirm(boolean confirm) {
+        this.confirm = confirm;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
     }
 }

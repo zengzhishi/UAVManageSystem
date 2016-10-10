@@ -88,6 +88,7 @@ public class AdminController {
             jsonRender.put("Msg", "Wrong username or password");
             jsonRender.put("Code", 103);
         }
+//        jsonRender.put("header", response.getHeader("Access-Control-Allow-Origin"));
 
         return jsonRender;
     }
@@ -175,10 +176,10 @@ public class AdminController {
     使用用户的id进行查询用户的数据
      */
     /**
-     * @api {get} /admin/show/{id} Admin login system(id 为用户的id)
-     * @apiName Admin login
+     * @api {get} /admin/show/{id} Admin show user detail info(id 为用户的id)
+     * @apiName Admin show user detail
      * @apiGroup Admin
-     * @apiVersion 0.1.0
+     * @apiVersion 0.2.1
      *
      *
      * @apiSource {Number} Code Return code of state
@@ -466,7 +467,7 @@ public class AdminController {
      * @api {post} /admin/add/admin Admin add admin user
      * @apiName Admin add admin
      * @apiGroup Admin
-     * @apiVersion 0.1.0
+     * @apiVersion 0.2.2
      *
      * @apiParam {String} username Username of the admin.
      * @apiParam {String} password  Password of the admin.
@@ -482,12 +483,18 @@ public class AdminController {
      *     }
      *
      * @apiError IllegalMethodError Add admin user Error.
+     * @apiError RepeatedUser Repeating User Name.
      *
      * @apiErrorExample Error-Response:
      *     HTTP/1.1 104 IllegalMethodError
      *     {
      *       "Msg": "Illegal Action Parameters",
      *       "Code": 104
+     *     }
+     *     HTTP/1.1 105 RepeatedUser
+     *     {
+     *       "Code": 105,
+     *       "Msg": "Repeating User Name"
      *     }
      *
      */
@@ -499,6 +506,11 @@ public class AdminController {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
+        if (adminService.getAdminByUserId(username) != null){
+            jsonRender.put("Code", 105);
+            jsonRender.put("Msg", "Repeating User Name");
+            return jsonRender;
+        }
         try{
             adminService.addAdmin(username, password);
         }catch(Exception e){
