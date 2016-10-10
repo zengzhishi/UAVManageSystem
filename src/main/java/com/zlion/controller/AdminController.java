@@ -643,10 +643,35 @@ public class AdminController {
         return jsonRender;
     }
 
+    /**
+     * @api {get} /show/unconfirm/blockApplications Show unconfirm block Applications.
+     * @apiName Admin get block applications
+     * @apiGroup Admin
+     * @apiVersion 0.5.0
+     *
+     * @apiParam {Number} page Present page index.
+     * @apiParam {Number} rows Number of locations for one page.
+     *
+     * @apiSource {Number} Code Return code of state
+     * @apiSource {String} Msg Msg of state
+     * @apiSource {BlockApplications} Data List of blockApplications.
+     *
+     * @apiSuccessExample Success-Response:
+     *     HTTP/1.1 200 OK
+     *     {
+     *       "Code": 200,
+     *       "Msg": "ok"
+     *       "Data": [
+     *          {id, geohash, startDate, endDate, [uavId,...], applyUserId, confirm, msg}
+     *       ]
+     *     }
+     *
+     */
     @ResponseBody
     @RequestMapping(value = "/show/unconfirm/blockApplications", method = RequestMethod.GET)
     public Result getUnconfirmBlockApplication(HttpServletRequest request, HttpSession session){
         Result jsonRender = new Result();
+        jsonRender = jsonRender.okForList();
 
         int page = 1, rows = 10;
         //分页的基本参数，根据需要自己设置需要的参数把
@@ -658,7 +683,6 @@ public class AdminController {
 
         List<BlockApplication> blockApplications = uavService.getUnconfirmBlockApplications(page, rows);
 
-        jsonRender = jsonRender.okForList();
         jsonRender.put("Data", blockApplications);
 
         return jsonRender;
