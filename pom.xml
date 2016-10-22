@@ -5,7 +5,7 @@
 
 	<groupId>com.zlion</groupId>
 	<artifactId>uavmanagesystem</artifactId>
-	<version>0.1.0</version>
+	<version>0.6.1</version>
 	<packaging>jar</packaging>
 
 	<name>UAVManageSystem</name>
@@ -53,6 +53,22 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-email -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-email</artifactId>
+			<version>1.4</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/commons-httpclient/commons-httpclient -->
+		<dependency>
+			<groupId>commons-httpclient</groupId>
+			<artifactId>commons-httpclient</artifactId>
+			<version>3.1</version>
+		</dependency>
+
+
 
 		<!--<dependency>-->
 			<!--<groupId>org.springframework.boot</groupId>-->

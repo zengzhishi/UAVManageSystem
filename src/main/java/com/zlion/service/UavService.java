@@ -7,6 +7,7 @@ import com.zlion.model.Uav;
 import com.zlion.repository.BlockApplicationRepository;
 import com.zlion.repository.LocationRepository;
 import com.zlion.repository.UavRepository;
+import com.zlion.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,16 +30,21 @@ public class UavService {
     private UavRepository uavRepository;
     private LocationRepository locationRepository;
     private BlockApplicationRepository blockApplicationRepository;
+    private UserRepository userRepository;
 
     private long countvalue;
     private final static SimpleDateFormat sim = new SimpleDateFormat("yyyy-MM-dd hh");
     private static final int ForwardDateNum = 1;
 
+
     @Autowired
-    public UavService(UavRepository uavRepository, LocationRepository locationRepository, BlockApplicationRepository blockApplicationRepository) {
+    public UavService(UavRepository uavRepository, LocationRepository locationRepository,
+                      BlockApplicationRepository blockApplicationRepository,
+                      UserRepository userRepository) {
         this.uavRepository = uavRepository;
         this.locationRepository = locationRepository;
         this.blockApplicationRepository = blockApplicationRepository;
+        this.userRepository = userRepository;
     }
 
 
@@ -191,6 +197,30 @@ public class UavService {
         String strEndDate = sim.format(cal.getTime());
 
         return getBlockApplyState(geohash, strBeginDate, strEndDate);
+    }
+
+    public boolean isApplied(String geohashCode, String uuid){
+        Long uavId = uavRepository.findByUuid(uuid).getId();
+        List<BlockApplication> blockApplicationList = blockApplicationRepository.findByGeohashAndTime(geohashCode, new Date());
+        if (blockApplicationList.size() != 0) {
+            for (BlockApplication blockApplication : blockApplicationList) {
+                for (Long uav : blockApplication.getUavs()) {
+                    if (uav == uavId)
+                        return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public String findUserEmail(String uuid){
+        Long userId = uavRepository.findByUuid(uuid).getUser_id();
+        return userRepository.findByUserId(userId).getEmail();
+    }
+
+    public String findUserPhone(String uuid){
+        Long userId = uavRepository.findByUuid(uuid).getUser_id();
+        return userRepository.findByUserId(userId).getPhone();
     }
 
     /**

@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.text.ParseException;
 import java.util.*;
 
@@ -86,24 +88,33 @@ public class UavController {
         if (session.getAttribute("adminId") != null || uavService.checkUuidOwnerWithLoginUser(uuid, userId)){
             jsonRender = jsonRender.okForList();
 
-            String strBeginTime = request.getParameter("beginTime");
-            String strEndTime = request.getParameter("endTime");
+            try{
+                String strBeginTime = URLDecoder.decode(request.getParameter("beginTime"), "UTF-8");
+                String strEndTime = URLDecoder.decode(request.getParameter("endTime"), "UTF-8");
 
-            int page = 1, rows = 10;
-            //分页的基本参数，根据需要自己设置需要的参数把
-            if (!(request.getParameter("page").equals("")||request.getParameter("page")==null)
-                    && !(request.getParameter("rows")==null||request.getParameter("rows").equals(""))){
-                page = Integer.parseInt(request.getParameter("page"));
-                rows = Integer.parseInt(request.getParameter("rows"));
-            }
-            try {
-                List<Location> locationlist = uavService.getLocationsByTime(uuid, strBeginTime, strEndTime, page, rows);
-                jsonRender.put("Date",locationlist);
-                jsonRender.put("Counts",uavService.getCountvalue());
-            }catch (DateCompareException e){
+
+                int page = 1, rows = 10;
+                //分页的基本参数，根据需要自己设置需要的参数把
+                if (!(request.getParameter("page").equals("")||request.getParameter("page")==null)
+                        && !(request.getParameter("rows")==null||request.getParameter("rows").equals(""))){
+                    page = Integer.parseInt(request.getParameter("page"));
+                    rows = Integer.parseInt(request.getParameter("rows"));
+                }
+                try {
+                    List<Location> locationlist = uavService.getLocationsByTime(uuid, strBeginTime, strEndTime, page, rows);
+                    jsonRender.put("Date",locationlist);
+                    jsonRender.put("Counts",uavService.getCountvalue());
+                }catch (DateCompareException e){
+                    e.printStackTrace();
+                    jsonRender = jsonRender.argError();
+                    jsonRender.put("Msg", e.getMessage());
+                }
+
+            }catch (UnsupportedEncodingException e){
                 e.printStackTrace();
                 jsonRender = jsonRender.argError();
-                jsonRender.put("Msg", e.getMessage());
+                jsonRender.put("Msg", "Parameter Error");
+                return jsonRender;
             }
         }
         else{
@@ -122,11 +133,15 @@ public class UavController {
      * @api {post} /uav/location/add Add Location of uav(只记录无回应)
      * @apiName Locations for uav
      * @apiGroup Uav
-     * @apiVersion 0.3.0
+     * @apiVersion 0.5.1
      *
-     * @apiParam {Number} height Height of uav
+     * @apiParam {String} uuid Uuid of uav.
+     * @apiParam {Number} height Height of uav.
      * @apiParam {Number} latitude Latitude of uav.
      * @apiParam {Number} longitude Longitude of uav.
+     *
+     * @apiSuccessExample Success-Response:
+     * 无
      *
      */
     @ResponseBody
@@ -146,7 +161,7 @@ public class UavController {
 
     /**
      *
-     * @api {get} /location/encode 根据一个经纬度来编码为geohash，并返回geohash和该geohash包含的区块范围
+     * @api {get} /uav/location/encode 根据一个经纬度来编码为geohash，并返回geohash和该geohash包含的区块范围
      * @apiName Locations encode for uav
      * @apiGroup Uav
      * @apiVersion 0.3.3
@@ -276,6 +291,16 @@ public class UavController {
 
         String strStartDate = request.getParameter("beginTime");
         String strEndDate = request.getParameter("endTime");
+
+        try{
+            strStartDate = URLDecoder.decode(strStartDate, "UTF-8");
+            strEndDate = URLDecoder.decode(strEndDate, "UTF-8");
+        }catch (UnsupportedEncodingException e){
+            e.printStackTrace();
+            jsonRender = jsonRender.argError();
+            jsonRender.put("Msg", "Parameter Error");
+            return jsonRender;
+        }
 
         //判断时间数据
         if (strStartDate==null || "".equals(strEndDate)){
@@ -410,6 +435,16 @@ public class UavController {
 
         String strBeginTime = request.getParameter("beginTime");
         String strEndTime = request.getParameter("endTime");
+
+        try{
+            strBeginTime = URLDecoder.decode(strBeginTime, "UTF-8");
+            strEndTime = URLDecoder.decode(strEndTime, "UTF-8");
+        }catch (UnsupportedEncodingException e){
+            e.printStackTrace();
+            jsonRender = jsonRender.argError();
+            jsonRender.put("Msg", "Parameter Error");
+            return jsonRender;
+        }
         if ((strBeginTime.equals("")||strBeginTime==null) &&(strEndTime.equals("")||strEndTime==null)){
             jsonRender = jsonRender.argError();
             jsonRender.put("Msg", "Time arguments can't be empty!");
@@ -458,7 +493,7 @@ public class UavController {
 
 
     /**
-     * @api {delete} /blockApplication Block Application delete
+     * @api {delete} /uav/blockApplication Block Application delete
      * @apiName Admin delete block application
      * @apiGroup Uav
      * @apiVersion 0.3.2
@@ -532,7 +567,7 @@ public class UavController {
     }
 
     /**
-     * @api {post} /blockApplication/update Block Application info update
+     * @api {post} /uav/blockApplication/update Block Application info update
      * @apiName update action for block application
      * @apiGroup Uav
      * @apiVersion 0.3.3

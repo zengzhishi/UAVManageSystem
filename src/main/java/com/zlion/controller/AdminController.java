@@ -587,7 +587,7 @@ public class AdminController {
 
 
     /**
-     * @api {put} /confirm/blockApplication Block Application confirm(认证通过用户的区块申请)
+     * @api {put} /admin/confirm/blockApplication Block Application confirm(认证通过用户的区块申请)
      * @apiName Admin confirm block application
      * @apiGroup Admin
      * @apiVersion 0.3.3
@@ -644,10 +644,10 @@ public class AdminController {
     }
 
     /**
-     * @api {get} /show/unconfirm/blockApplications Show unconfirm block Applications.
+     * @api {get} /admin/show/unconfirm/blockApplications Show unconfirm block Applications.
      * @apiName Admin get block applications
      * @apiGroup Admin
-     * @apiVersion 0.5.0
+     * @apiVersion 0.5.1
      *
      * @apiParam {Number} page Present page index.
      * @apiParam {Number} rows Number of locations for one page.
