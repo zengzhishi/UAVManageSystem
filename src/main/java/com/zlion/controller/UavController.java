@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
@@ -453,7 +452,7 @@ public class UavController {
 
         int page = 1, rows = 10;
         //分页的基本参数，根据需要自己设置需要的参数把
-        if (!(request.getParameter("page").equals("")||request.getParameter("page")==null)
+        if (!(request.getParameter("page")==null||request.getParameter("page").equals(""))
                 && !(request.getParameter("rows")==null||request.getParameter("rows").equals(""))){
             page = Integer.parseInt(request.getParameter("page"));
             rows = Integer.parseInt(request.getParameter("rows"));

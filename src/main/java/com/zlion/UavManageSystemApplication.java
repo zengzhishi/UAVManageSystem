@@ -6,7 +6,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
 
 @SpringBootApplication
-public class UavManageSystemApplication{
+public class UavManageSystemApplication extends SpringBootServletInitializer{
 
 //	@RequestMapping("/")
 //	public String home() {
@@ -14,10 +14,10 @@ public class UavManageSystemApplication{
 //				+ "<br />Welcome to <a href='http://waylau.com'>zlion.com</a></li>";
 //	}
 
-//	@Override
-//	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-//		return application.sources(UavManageSystemApplication.class);
-//	}
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		return application.sources(UavManageSystemApplication.class);
+	}
 
 //	public static void main(String[] args) {
 //		SpringApplication app = new SpringApplication(UavManageSystemApplication.class);

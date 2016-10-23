@@ -1,6 +1,5 @@
 package com.zlion.aop;
 
-import com.zlion.service.DateCompareException;
 import com.zlion.service.UavService;
 import com.zlion.util.GeohashUtil;
 import com.zlion.util.HttpClientCommonUtil;
@@ -13,17 +12,14 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.text.ParseException;
+import java.net.URLDecoder;
 import java.util.Date;
-import java.util.Map;
-import java.util.zip.DataFormatException;
 
 /**
  * Created by zzs on 10/7/16.
@@ -46,11 +42,11 @@ public class ResponseHeaderAspect {
     public void addRespondHeader(JoinPoint joinPoint) throws Throwable{
 
         ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-
+ 
         HttpServletResponse response=servletRequestAttributes.getResponse();
         response.setHeader("Access-Control-Allow-Origin", "*");
 
-        System.out.println(">>>>>>Add header complete!!!!");
+//        System.out.println(">>>>>>Add header complete!!!!");
 
     }
 
@@ -73,7 +69,7 @@ public class ResponseHeaderAspect {
         //发送邮件和短信
         System.out.println("检测 geohashCode:" + geohashCode);
         if (uavService.isApplied(geohashCode, uuid)) {
-            System.out.println(">>>>>>>越界了");
+//            System.out.println(">>>>>>>越界了");
             //发送提醒消息
             String userEmail = uavService.findUserEmail(uuid);
             String userPhone = uavService.findUserPhone(uuid);
